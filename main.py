@@ -24,9 +24,12 @@ def parseArgs(args):
 		except:
 			raise Exception(key, 'has no params')
 		if key == '-g':
-			param = param.split(',')
-			note = param[0]
-			kind = param[1]
+			params = param.split(',')
+			try:
+				note = params[0]
+				kind = params[1]
+			except:
+				raise Exception('-g', 'bad args "%s"' % param)
 			if not (note in music.Notes.notes):
 				raise Exception('-g', 'bad note "%s"' % note)
 			if music.Gammas.schemaFor(kind) is None:
@@ -40,8 +43,14 @@ def parseArgs(args):
 			acc.append( (key, param) )
 			i += 2
 		elif key == '-tm':
-			param = param.split(',')
-			acc.append( (key, param[0], param[1]) )
+			params = param.split(',')
+			if len(params) != 2:
+				raise Exception('-tm', 'bad args "%s"' % param)
+			if not (params[0] in music.Notes.notes):
+				raise Exception('-tm', 'bad note "%s"' % params[0])
+			if music.Gammas.schemaFor(params[1]) is None:
+				raise Exception('-tm', 'bad kind "%s"' % params[1])
+			acc.append( (key, params[0], params[1]) )
 			i += 2
 		elif key == '-iw':
 			notes = param.split(',')
@@ -74,7 +83,7 @@ def apply(cmd):
 	elif cmd[0] == '-ci':
 		pass
 	elif cmd[0] == '-tm':
-		pass
+		print(music.threeMainIn(cmd[1], cmd[2]))
 	elif cmd[0] == '-iw':
 		print('gamma vars for notes: %s' % cmd[1])
 		ans = music.inWhichGamma(cmd[1])
@@ -88,9 +97,10 @@ def main():
 	try:
 		args = parseArgs(sys.argv)
 	except Exception as e:
-		print(e)
+		print('INPUT ERROR')
+		print('%s: %s' % (e.args[0], e.args[1]))
 		return
-	print args
+	#print args
 	for cmd in args:
 		apply(cmd)
 
