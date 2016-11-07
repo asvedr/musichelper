@@ -93,7 +93,7 @@ def inWhichGamma(notes):
 	acc = []
 	for tonica in Notes():
 		for schema in Gammas.schemas:
-			gamma = Gammas.gammaFor(tonica, schema)
+			gamma = Gammas.gammaFor(tonica, Gammas.schemas[schema])
 			allIn = True
 			for note in notes:
 				allIn = allIn and (note in gamma)

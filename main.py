@@ -43,8 +43,12 @@ def parseArgs(args):
 			param = param.split(',')
 			acc.append( (key, param[0], param[1]) )
 			i += 2
-		elif key == 'iw':
-			acc.append( (key, param.split(',')) )
+		elif key == '-iw':
+			notes = param.split(',')
+			for n in notes:
+				if not (n in music.Notes.notes):
+					raise Exception('-iw', 'bad note "%s"' % n)
+			acc.append( (key, notes) )
 			i += 2
 		else:
 			raise Exception('unknown cmd', key)
@@ -72,7 +76,13 @@ def apply(cmd):
 	elif cmd[0] == '-tm':
 		pass
 	elif cmd[0] == '-iw':
-		pass
+		print('gamma vars for notes: %s' % cmd[1])
+		ans = music.inWhichGamma(cmd[1])
+		if len(ans) == 0:
+			print('NOT FOUND')
+		else:
+			for gm in ans:
+				print(gm)
 
 def main():
 	try:
