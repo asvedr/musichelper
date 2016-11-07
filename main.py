@@ -1,102 +1,87 @@
-class Notes:
-	notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','H']
-	def __init__(self,notes=None):
-		if notes != None:
-			self.notes = notes
-		self.len = len(self.notes)
-	def __getitem__(self,index):
-		return self.notes[index % self.len]
-	def __len__(self):
-		return self.len
-	def __iter__(self):
-		return self.notes.__iter__()
-	def index(self,a):
-		return self.notes.index(a)
-	def __repr__(self):
-		return self.__str__()
-	def __str__(self):
-		return str(self.notes)
-	def __add__(gamma, arg):
-		if type(arg) == int:
-			acc = []
-			for i in range(len(gamma)):
-				acc.append(gamma[i + arg])
-			return Notes(acc)
-		raise Exception('Notes.__add__', 'arg not int')
-	def __sub__(gamma, arg):
-		return gamma.__add__(arg * (-1))
+import music
+import sys
 
-notes = Notes()
-chords = {
-	'maj': [0, 2, 3.5], # D A F#
-	'm':   [0, 1.5, 3.5], # D A F
-	'maj7':   [0, 2, 3.5, 5.5], # A E G C#
-	'7':  [0, 2, 3.5, 5] # A E G C
-}
+help = [
+	'--gammas        : list of available gammas',
+	'--chords        : list of available chord kinds',
+	'-g <note,kind>  : gamma for note and kind example: "-g A,minor"',
+	'-c <chord>      : show notes in chord: "-c Am"',
+	'-ci <chord>     : show schema for chord: "-ci maj7',
+	'-tm <note,kind> : three main in',
+	'-iw <notes,>    : in which gamma this notes' 
+]
 
-major = [1, 1, 0.5, 1, 1, 1]#, 0.5]
-minor = [1, 0.5, 1, 1, 0.5, 1]#, 1]
-
-def gammaFor(tonica,inters):
-	inters = [int(i * 2) for i in inters]
-	ind = notes.index(tonica)
-	result = [tonica]
-	for i in inters:
-		ind += i
-		result.append(notes[ind])
-	return Notes(result)
-
-def checkParallel(g1,g2):
-	for note in g1:
-		if not (note in g2):
-			return False
-	return True
-
-def chord(note,chord='maj'):
-	ind = notes.index(note)
-	schema = chords[chord]
+def parseArgs(args):
 	acc = []
-	for i in schema:
-		sh = int(i * 2)
-		acc.append( notes[ind + sh] )
+	singletonKeys = ['--gammas', '-h', '--chords', '--help']
+	i = 1
+	while i < len(args):
+		key = args[i]
+		if key in singletonKeys:
+			return [(key,)]
+		try:
+			param = args[i+1]
+		except:
+			raise Exception(key, 'has no params')
+		if key == '-g':
+			param = param.split(',')
+			note = param[0]
+			kind = param[1]
+			if not (note in music.Notes.notes):
+				raise Exception('-g', 'bad note "%s"' % note)
+			if music.Gammas.schemaFor(kind) is None:
+				raise Exception('-g', 'bad gamma kind "%s"' % kind)
+			acc.append( (key, note, kind) )
+			i += 2
+		elif key == '-c':
+			acc.append( (key, param) )
+			i += 2
+		elif key == '-ci':
+			acc.append( (key, param) )
+			i += 2
+		elif key == '-tm':
+			param = param.split(',')
+			acc.append( (key, param[0], param[1]) )
+			i += 2
+		elif key == 'iw':
+			acc.append( (key, param.split(',')) )
+			i += 2
+		else:
+			raise Exception('unknown cmd', key)
 	return acc
 
+def apply(cmd):
+	if cmd[0] == '-h' or cmd[0] == '--help':
+		for line in help:
+			print(line)
+	elif cmd[0] == '--gammas':
+		for g in list(music.Gammas.schemas.keys()):
+			print(g)
+		for g in list(music.Gammas.aliases.keys()):
+			print('%s ==> %s' % (g, music.Gammas.unalias(g)))
+	elif cmd[0] == '--chords':
+		pass
+	elif cmd[0] == '-g':
+		g = music.Gammas.gammaFor(cmd[1], music.Gammas.schemaFor(cmd[2]))
+		print('gamma for %s %s' % (cmd[1], cmd[2]))
+		print(g)
+	elif cmd[0] == '-c':
+		pass
+	elif cmd[0] == '-ci':
+		pass
+	elif cmd[0] == '-tm':
+		pass
+	elif cmd[0] == '-iw':
+		pass
 
-class Gammas:
-	def __init__(self):
-		myGammas = [gammaFor(note,major) for note in notes]
-		self.major = {}
-		self.minor = {}
-		self.parMajor = {}
-		self.parMinor = {}
-		for note in notes:
-			minorG = gammaFor(note,minor)
-			for majorG in myGammas:
-				if checkParallel(minorG,majorG):
-					self.parMajor[majorG[0]] = minorG
-					self.parMinor[minorG[0]] = majorG
-					self.major[majorG[0]] = majorG
-					self.minor[minorG[0]] = minorG
-	def parallelFor(self,note):
-		try:
-			assert(note[-1] == 'm')
-			return self.parMinor[note[:-1]]
-		except:
-			return self.parMajor[note]
-	def gammaFor(self,note):
-		try:
-			assert(note[-1] == 'm')
-			return self.minor[note[:-1]]
-		except:
-			return self.major[note]
-	def inWhichGamma(self,notes):
-		acc = []
-		for dominanta in self.major:
-			gamma = self.major[dominanta]
-			if all([(n in gamma) for n in notes]):
-				majName = gamma[0]
-				minName = self.parallelFor(majName)[0]
-				acc.append(majName + " or " + minName + 'm')
-		return acc
+def main():
+	try:
+		args = parseArgs(sys.argv)
+	except Exception as e:
+		print(e)
+		return
+	print args
+	for cmd in args:
+		apply(cmd)
 
-gammas = Gammas()
+main()
