@@ -38,19 +38,24 @@ rand.seed()
 def randIn(seq):
 	return seq[rand.randrange(0, len(seq))]
 
-def genMelody(length, allowIntervals):
+def genMelody(length, allowIntervals, ud):
 	prima  = randIn(seqToGet)
 	song   = [[prima, 4]]
 	schema = []
 	for _ in range(length):
 		noteI = allNotes.index(prima)
 		interval = randIn(allowIntervals)
-		ways = []
-		if noteI + interval < len(allNotes):
-			ways.append(1)
-		if noteI - interval >= 0:
-			ways.append(-1)
-		interval *= randIn(ways)
+		if ud == 'ud':
+			ways = []
+			if noteI + interval < len(allNotes):
+				ways.append(1)
+			if noteI - interval >= 0:
+				ways.append(-1)
+			interval *= randIn(ways)
+		elif ud == 'u':
+			pass
+		elif ud == 'd':
+			interval *= -1
 		schema.append(float(interval) / 2.0)
 		prima = allNotes[noteI + interval]
 		song.append([prima, 4])
@@ -77,7 +82,10 @@ class Stat:
 		self.total     = 0
 	def showAll(self):
 		def printPerc(mess, good, total):
-			print('%s %s/%s (%s%%)' % (mess, good, total, (float(good) / total * 100.0)))
+			try:
+				print('%s %s/%s (%s%%)' % (mess, good, total, (float(good) / total * 100.0)))
+			except:
+				print('%s N/A' % mess)
 		def perc(i):
 			try:
 				v = float(self.dSigGood[i]) / self.dSigAll[i]
@@ -125,6 +133,13 @@ class Stat:
 def main():
 	length = int(sys.argv[1])
 	intervals = parseIntervals(sys.argv[2])
+	try:
+		udFlag = sys.argv[3]
+	except:
+		udFlag = 'ud'
+	if not (udFlag in ['u','d','ud']):
+		print('third arg must be "u", "d" or "ud"')
+		return
 	checkP = genCheckSeq(intervals)
 	checkM = genCheckSeq([-n for n in intervals])
 	stat = Stat()
@@ -133,7 +148,7 @@ def main():
 		sys.exit(0)
 	signal.signal(signal.SIGINT, exitFun)
 	while True:
-		melody = genMelody(length, intervals)
+		melody = genMelody(length, intervals, udFlag)
 		ans = 'r'
 		while ans == 'r':
 			makeAndPlay(melody[0])
@@ -147,17 +162,22 @@ def main():
 				ans = 'r'
 				print(list([-i / 2.0 for i in intervals]))
 				makeAndPlay(checkM)
-		var = list([float(n) for n in ans.split(' ')])
-		for i in range(len(schema)):
-			if i >= len(var):
-				stat.fail(schema[i])
-			else:
-				if abs(schema[i] - var[i]) < 0.001:
-					stat.succ(schema[i])
-				else:
+		try:
+			var = list([float(n) for n in ans.split(' ')])
+		except:
+			var = None
+			print('INPUT ERR')
+		if not (var is None):
+			for i in range(len(schema)):
+				if i >= len(var):
 					stat.fail(schema[i])
-		stat.showLine()
-		stat.addLine()
-		input()
+				else:
+					if abs(schema[i] - var[i]) < 0.001:
+						stat.succ(schema[i])
+					else:
+						stat.fail(schema[i])
+			stat.showLine()
+			stat.addLine()
+			input()
 
 main()
