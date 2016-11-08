@@ -6,7 +6,7 @@ import sys
 import signal
 
 TEMP_NAME = 'temp.wav'
-PLAYER    = 'aplay'
+PLAYER    = 'afplay'
 
 def makeAndPlay(song):
 	ps.make_wav(song, fn=TEMP_NAME)
@@ -21,6 +21,15 @@ allNotes = []
 for i in range(3,6):
 	for n in notes:
 		allNotes.append(n + str(i))
+
+def genCheckSeq(ints):
+	tonica = 'c4'
+	index  = allNotes.index(tonica)
+	acc    = []
+	for i in ints:
+		acc.append( (tonica, 4) )
+		acc.append( (allNotes[index + i], 4) )
+	return acc
 
 #makeAndPlay(list([[n,4] for n in notes]))
 
@@ -116,6 +125,8 @@ class Stat:
 def main():
 	length = int(sys.argv[1])
 	intervals = parseIntervals(sys.argv[2])
+	checkP = genCheckSeq(intervals)
+	checkM = genCheckSeq([-n for n in intervals])
 	stat = Stat()
 	def exitFun(sig, frame):
 		stat.showAll()
@@ -123,9 +134,20 @@ def main():
 	signal.signal(signal.SIGINT, exitFun)
 	while True:
 		melody = genMelody(length, intervals)
-		makeAndPlay(melody[0])
-		schema = melody[1]
-		var = list([float(n) for n in input('variant: ').split(' ')])
+		ans = 'r'
+		while ans == 'r':
+			makeAndPlay(melody[0])
+			schema = melody[1]
+			ans = input('variant: ').strip()
+			if ans == 'c' or ans == '+c':
+				ans = 'r'
+				print(list([i / 2.0 for i in intervals]))
+				makeAndPlay(checkP)
+			elif ans == '-c':
+				ans = 'r'
+				print(list([-i / 2.0 for i in intervals]))
+				makeAndPlay(checkM)
+		var = list([float(n) for n in ans.split(' ')])
 		for i in range(len(schema)):
 			if i >= len(var):
 				stat.fail(schema[i])
