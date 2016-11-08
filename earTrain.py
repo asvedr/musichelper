@@ -29,6 +29,7 @@ def genCheckSeq(ints):
 	for i in ints:
 		acc.append( (tonica, 4) )
 		acc.append( (allNotes[index + i], 4) )
+		acc.append( ('r', 4) )
 	return acc
 
 #makeAndPlay(list([[n,4] for n in notes]))
