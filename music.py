@@ -34,6 +34,20 @@ chords = {
 	'7':     [0, 2, 3.5, 5] # A E G C
 }
 
+def distance(a,b):
+	i = Notes.notes.index(a)
+	P = 0
+	M = 0
+	for j in range(0, 12):
+		if notes[i+j] == b:
+			P = j
+			break
+	for j in range(0, 12):
+		if notes[i - j] == b:
+			M = j
+			break
+	return (P / 2.0, - M / 2.0)
+
 # check two gammas to parallel
 def checkParallel(g1,g2):
 	for note in g1:
@@ -54,12 +68,14 @@ class Gammas:
 	schemas = {	
 		'naturalMajor'  : [1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5],
 		'naturalMinor'  : [1.0, 0.5, 1.0, 1.0, 0.5, 1.0, 1.0],
-		'harmonicMinor' : [1.0, 0.5, 1.0, 1.0, 0.5, 1.5, 0.5]
+		'harmonicMinor' : [1.0, 0.5, 1.0, 1.0, 0.5, 1.5, 0.5],
+		'harmonicMajor' : [1.0, 1.0, 0.5, 1.0, 0.5, 1.5, 0.5]
 	}
 	aliases = {
 		'M'  : 'naturalMajor',
 		'm'  : 'naturalMinor',
-		'hm' : 'harmonicMinor'
+		'hm' : 'harmonicMinor',
+		'hM' : 'harmonicMajor'
 	}
 	@classmethod
 	def unalias(cls, name):
